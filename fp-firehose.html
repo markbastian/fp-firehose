@@ -1,0 +1,469 @@
+<><html lang="en"><head><meta charset="utf-8" /><title>FP From the Fire Hose</title><meta content="FP From the Fire Hose" name="description" /><meta content="Mark Bastian" name="author" /><meta content="yes" name="apple-mobile-web-app-capable" /><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" /><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" name="viewport" /><link href="bower_components/reveal.js/css/reveal.css" rel="stylesheet" /><link href="bower_components/reveal.js/css/theme/default.css" id="theme" rel="stylesheet" /><!-- Code syntax highlighting --><link href="bower_components/reveal.js/lib/css/zenburn.css" rel="stylesheet" /><!-- Printing and PDF exports --><script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script><!--[if lt IE 9]>
+		<script src="bower_components/html5shiv/dist/html5shiv.js"></script>
+		<![endif]--></head><body><div class="reveal"><!-- Any section element inside of this container is displayed as a slide --><div class="slides"><section><h2>Functional Programming (FP)</h2><h2>From the fire hose</h2><p>Mark Bastian</p><p><a href="mailto:mbastia@sandia.gov?Subject=Syntax">mbastia@sandia.gov</a></p><p></p><p>2/25/2015</p></section><section><h2>The Challenge</h2><ul><li>Spend 30 minutes on FP theory<ul><li>It will have no practical value</li><li>It will be boring</li><li>You won't be impressed</li></ul></li><li>Spend 30 minutes on examples<ul><li>I might as well be speaking Sanskrit</li><li>The weirdness will permanently alienate you from the concept</li></ul></li><li>What I'll try<ul><li>FP in a few minutes</li><li>Examples</li></ul></li></ul></section><section><section><h2>Functional Programming</h2></section><section><h2>What is Functional Programming?</h2><blockquote cite="http://en.wikipedia.org/wiki/Functional_programming">&ldquo;In computer science, functional programming is a programming paradigm,
+    a style of building the structure and elements of computer programs, that treats
+    computation as the evaluation of mathematical functions and avoids changing-state
+    and mutable data.&rdquo;</blockquote><span style="position:absolute;bottom:-10;right:150;font-size:0.5em">http://en.wikipedia.org/wiki/Functional_programming</span></section><section><h2>Tenets of Functional Programming</h2><ul><li>Functions consistently map inputs to outputs</li><li>Data is immutable (values)</li><li>Functions have no side-effects</li></ul></section><section><h2>Functions</h2><ul><li>Functions are types in FP, not just methods<ul><li>They can be assigned</li><li>They can be passed around and returned</li></ul></li><li>FP Functions are Mathematical Functions, with all of their special properties:<ul><li>Consistent results</li><li>Composition, substitution, partial evaluation, etc.</li></ul></li></ul></section><section><h2>Values</h2><ul><li>Values are immutable</li><li>Primitives (double, int, string, etc.) are values</li><li>Value Types and Immutable Collections: Immutable classes with equality and hashcode</li><li>Values are implicitly concurrent</li><li>Values don't require deep copying since they can share history</li><li>Values are required for functional consistency</li><li>Values are easy to reason about</li><li>In FP, it's values all the way down</li></ul></section><section><h2>No Side Effects</h2><ul><li>Anything that affects computation besides the function internals is a side effect</li><li>Mathematical functions have no side-effects</li><li>Examples of side-effects include disk i/o, printing, rendering, and loading configuration files</li><li>In practice, there will be side-effects</li><li>FP seeks to minimize and contain them</li></ul></section><section><h2>Summary</h2><ul><li>Functional Programming treats computation as the evaluation of mathematical functions</li><li>To be functional, you must have:<ul><li>Functions as types: You can't have FP without functions</li><li>Value types: Mutable state breaks the functional contract</li><li>No side-effects: Side-effects break the functional contract</li></ul></li></ul></section></section><section><h1>Examples</h1></section><section><h2>Example Notes</h2><ul><li>I will go fast<ul><li>The point is to show a concept, not to fully explain it</li><li>I can't teach a new language AND a paradigm in 30 minutes</li><li>If I don't hit everything you can read it on your own</li></ul></li><li>All the code is in the slides</li><li>If I don't hit everything you can read it on your own</li></ul></section><section><section><h2>Example: Collection Abstractions</h2></section><section><h2>Collection Abstractions</h2><ul><li>Things you do all the time with collections:<ul><li>Map elements to different values</li><li>Filter certain elements out</li><li>Reduce all elements to a single value</li><li>Find a certain element</li><li>Check for the existence of one or more elements satisfying a predicate</li><li>Etc.</li></ul></li><li>Each pattern above is mostly boilerplate in OOP</li><li>Let's see how FP can help</li></ul></section><section><h3>Non-Functional Collection Operation 1</h3><p>Map a collection to its squares</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">public static List&lt;Integer&gt;map(List&lt;Integer&gt; input){
+    List&lt;Integer&gt; output = new LinkedList&lt;Integer&gt;();
+    for(Integer i : input){
+        output.add(i * i);
+    }
+    return output;
+}</code></pre></section><section><h3>Non-Functional Collection Operation 2</h3><p>Map a collection to its doubles</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">public static List&lt;Integer&gt;map(List&lt;Integer&gt; input){
+    List&lt;Integer&gt; output = new LinkedList&lt;Integer&gt;();
+    for(Integer i : input){
+        output.add(i * 2);
+    }
+    return output;
+}</code></pre></section><section><h3>Observations</h3><ul><li>These fragments were identical except for a single operation</li><li>You cannot easily abstract away the common code with OOP</li><li>Try it if you don't believe me</li><li>Let's look at my solution</li></ul></section><section><h2>The OOP Solution</h2><div style="position:relative;width:120%;left:-10%"><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">public interface IOperation&lt;T, U&gt; {
+    public T apply(U input);
+}
+
+public static &lt;T, U&gt; List&lt;T&gt; map(List&lt;U&gt; input, IOperation&lt;T, U&gt; operation){
+    List&lt;T&gt; output = new LinkedList&lt;T&gt;();
+    for(U i : input){
+        output.add(operation.apply(i));
+    }
+    return output;
+}</code></pre></div><p>Whoa, ugly!</p></section><section><h2>The OOP Solution</h2><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">public static void main(String[] args){
+    List&lt;Integer&gt; ints = new LinkedList&lt;Integer&gt;();
+    for(int i = 0; i &lt; 1000000; i++) ints.add(i);
+
+    List&lt;Double&gt; roots = map(ints, new IOperation&lt;Double, Integer&gt;() {
+        @Override
+        public Double apply(Integer input) {
+            return Math.sqrt(input);
+        }
+    });
+
+    System.out.println(roots.size());
+}</code></pre><p>This isn't particularly satisfying</p></section><section><h2>The FP Solution</h2><p>Java 8</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">List&lt;Integer&gt; squares =
+        ints.stream().map(i -&gt; i * i).collect(Collectors.toList());</code></pre><ul><li>Notes<ul><li>i -> i * i is a first class function</li><li>It is called on every element of ints (our collection)</li><li>map takes a function as its argument</li></ul></li></ul></section><section><h2>Comparison</h2><p>Java 8</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">List&lt;Integer&gt; squares =
+        ints.stream().map(i -&gt; i * i).collect(Collectors.toList());</code></pre><p>Java 7</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">List&lt;Double&gt; squares = map(ints, new IOperation&lt;Double, Integer&gt;() {
+    @Override
+    public Double apply(Integer input) {
+        return input * input;
+    }
+});</code></pre><ul><li>6X less code (ignoring the line break)</li><li>More readable and less error prone</li></ul></section><section><h3>Examples in Multiple Languages</h3><p>Java 8</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">List&lt;Integer&gt; squares =
+        ints.stream().map(i -&gt; i * i).collect(Collectors.toList());</code></pre><p>Scala</p><pre><code class="scala" contenteditable="contenteditable" data-trim="data-trim">val squares = (0 until 1000000) map { x =&gt; x * x }</code></pre><p>Clojure</p><pre><code class="clojure" contenteditable="contenteditable" data-trim="data-trim">(def squares (map #(* % %) (range 0 1000000)))</code></pre></section><section><h3>Examples in FP Languages</h3><p>Scala</p><pre><code class="scala" contenteditable="contenteditable" data-trim="data-trim">val squares = (0 until 1000000) map { x =&gt; x * x }</code></pre><p>Clojure</p><pre><code class="clojure" contenteditable="contenteditable" data-trim="data-trim">(def squares (map #(* % %) (range 0 1000000)))</code></pre><p>The FP versions are even smaller than the Java 8 version because of their design</p></section><section><h3>First Class Functions Summary</h3><ul><li>First class functions allow you to abstract away repetitive patterns of action</li><li>What is more common?<ul><li>Domain objects</li><li>Patterns of action</li></ul></li><li>Programming for patterns of action gives high reuse, reduces line count, and reduces potential for errors</li></ul></section></section><section><section><h2>Example: Values</h2></section><section><h3>Recall: Advantages of Values</h3><ul><li>Values are concurrent</li><li>Values are easy to reason about</li><li>FP's predictablility guarantees are lost when arguments are mutable</li><li>For true FP, it's values all the way down</li></ul></section><section><h2>Java Example: Concurrent Modification</h2><p>What happens here?</p><div style="position:relative;width:120%;left:-10%"><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">List&lt;Integer&gt; ints = new LinkedList&lt;&gt;();
+for(int i = 0; i &lt; 1000000; i++) ints.add(i);
+
+new Thread(() -&gt; {
+    while(!ints.isEmpty()) ints.remove(0);
+}).start();
+
+List&lt;Integer&gt; evens =
+        ints.stream().filter(i -&gt; (0 == (i % 2))).collect(Collectors.toList());
+
+System.out.println(evens.size());</code></pre></div></section><section><h2>Java Example Output</h2><div style="position:relative;width:120%;left:-10%"><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">Exception in thread &quot;main&quot; java.lang.NullPointerException
+	at example.StreamStuffNPE.lambda$main$1(StreamStuffNPE.java:17)
+	at example.StreamStuffNPE$$Lambda$2/250421012.test(Unknown Source)
+	at java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:174)
+	at java.util.LinkedList$LLSpliterator.forEachRemaining(LinkedList.java:1235)
+	at java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:512)
+	at java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:502)
+	at java.util.stream.ReduceOps$ReduceOp.evaluateSequential(ReduceOps.java:708)
+	at java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+	at java.util.stream.ReferencePipeline.collect(ReferencePipeline.java:499)
+	at example.StreamStuffNPE.main(StreamStuffNPE.java:17)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:483)
+	at com.intellij.rt.execution.application.AppMain.main(AppMain.java:134)</code></pre></div></section><section><h2>What happened?</h2><ul><li>Two threads were operating concurrently on a single mutable data structure</li><li>I can't divine the exact details from the stack trace</li><li>Clearly, though, the result is indeterminate</li></ul></section><section><h3>Concurrency with Immutable Data Structures</h3><p>What happens here?</p><pre><code class="clojure" contenteditable="contenteditable" data-trim="data-trim">(def int-vec (into [] (range 1000000)))
+
+(future
+  (loop[rem (rest int-vec)]
+    (if (empty? rem)
+      (prn &quot;All done&quot;)
+      (recur (rest rem)))))
+
+(count (filter #(= 0 (mod % 2)) int-vec))
+=&gt; #&apos;user/int-vec
+=&gt; #&lt;core$future_call$reify__6320@73f5597d: :pending&gt;
+&quot;All done&quot;
+=&gt; 500000</code></pre></section><section><h2>How did this work?</h2><ul><li>The int-vec data structure was <b><i><u>immutable</u></i></b></li><li>The future did not modify int-vec; it makes a new version of it at every iteration</li><li>The filter and count operate on the initial immutable data structure - NOT an intermediate one</li></ul></section><section><h2>Conclusion</h2><ul><li>Values are a powerful concept that is a key requirement for FP</li><li>Values give implicit concurrency, are easy to reason about,
+    and are easy to manipulate and analyze</li><li>Language Notes:<ul><li>Scala has good value support (Immutable collections and case classes)</li><li>Clojure has amazing value support (Immutable collections and defrecords)</li><li>Java has NO value support (Collections and classes are mutable)</li></ul></li></ul></section></section><section><section><h2>Example: Car Shopping</h2><ul><li>This is trivial trade analysis example</li><li>It is a good illustration of many real, complex problems</li></ul></section><section><h2>The Problem</h2><ul><li>Create a sampling of items (cars)</li><li>Evaluate each</li><li>Return the best one</li></ul></section><section><h2>The OOP/Java Solution</h2></section><section><p>Car.java</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">package cars;
+
+public class Car {
+    private String make = null;
+    private int year = 0;
+    private String color = null;
+    private double topSpeed = 0.0;
+
+    public String getMake() {
+        return make;
+    }
+
+    public void setMake(String make) {
+        this.make = make;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public void setYear(int year) {
+        this.year = year;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public double getTopSpeed() {
+        return topSpeed;
+    }
+
+    public void setTopSpeed(double topSpeed) {
+        this.topSpeed = topSpeed;
+    }
+
+    @Override
+    public String toString() {
+        return getColor() + &quot; &quot; + getYear() + &quot; &quot; + getMake() + 
+        &quot; with top speed of &quot; + getTopSpeed() + &quot; mph&quot;;
+    }
+}
+</code></pre></section><section><p>TestDriver.java</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">package cars;
+
+public class TestDriver {
+    //Super complicated ranking function.
+    public static double rank(Car car){
+        double score = 0.0;
+        switch (car.getColor()) {
+            case &quot;Red&quot;:
+                score = 2.0;
+                break;
+            case &quot;Green&quot;:
+                score = 1.0;
+                break;
+            case &quot;White&quot;:
+                score = 1.5;
+                break;
+            case &quot;Black&quot;:
+                score = 1.9;
+                break;
+            case &quot;Beige&quot;:
+                score = 0.0;
+                break;
+        }
+        return score;
+    }
+}
+</code></pre></section><section><p>CarPurchasingModel.java</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">package cars;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+public class CarPurchasingModel {
+    public static void main(String[] args){
+        List&lt;String&gt; colors = new LinkedList&lt;&gt;();
+        colors.add(&quot;Red&quot;);
+        colors.add(&quot;Green&quot;);
+        colors.add(&quot;White&quot;);
+        colors.add(&quot;Black&quot;);
+        colors.add(&quot;Beige&quot;);
+        
+        Map&lt;Car, Double&gt; ranked = new HashMap&lt;Car, Double&gt;();
+        for(String color : colors){
+            Car car = new Car();
+            car.setColor(color);
+            car.setMake(&quot;Honda&quot;);
+            car.setYear(2015);
+            car.setTopSpeed(120.0);
+            ranked.put(car, TestDriver.rank(car));
+        }
+        
+        Car bestCar = null;
+        double bestScore = -1;
+        for(Map.Entry&lt;Car, Double&gt; entry : ranked.entrySet()){
+            if(bestCar == null || entry.getValue() &gt; bestScore){
+                bestCar = entry.getKey();
+                bestScore = entry.getValue();
+            }
+        }
+        
+        System.out.println(&quot;The best car is: &quot; + bestCar);
+    }
+}
+</code></pre></section><section><h2>The FP/Clojure Solution</h2></section><section><h3>Clojure Solution</h3><pre><code class="clojure" contenteditable="contenteditable" data-trim="data-trim">(def color-options [:red :green :white :black :beige])
+(def basic-car { :make &quot;Honda&quot; :year 2015 :color :beige :top-speed 120.0 })
+(def all-cars (map #(into basic-car { :color % }) color-options))
+
+(defn rank [item]
+  &quot;Rank the car using a very complicated user preference algorithm&quot;
+  (case (item :color)
+    :red 2.0
+    :green 1.0
+    :white 1.5
+    :beige 0.0
+    :black 1.9
+    0.0))
+
+(def rank-map (zipmap all-cars (map rank all-cars)))
+
+(prn (str &quot;The best car is: &quot; (apply max-key val rank-map)))</code></pre></section><section><h2>Results</h2><ul><li>Java Output<ul><li>The best car is: Red 2015 Honda with top speed of 120.0 mph</li><li>Note that I overrode toString</li></ul></li><li>Clojure Output<ul><li>The best car is: [{:make &quot;Honda&quot;, :color :red, :top-speed 120.0, :year 2015} 2.0]</li></ul></li></ul></section><section><h2>Program Stats</h2><ul><li>Java<ul><li>3 Files/Classes</li><li>110 LOC</li></ul></li><li>Clojure<ul><li>1 File</li><li>17 LOC</li></ul></li></ul></section><section><h1>Observations</h1></section><section><h2>Data Representation</h2><ul><li>Java used a mutable class<ul><li>Care had to be taken to ensure consistency</li><li>I am stuck with this implementation - I can't add new fields at will</li><li>This code is not concurrent and would not work well for a parallel implementation</li></ul></li><li>Clojure used an immutable map<ul><li>Consistency and concurrency are implicit</li><li>I can add fields at will, even nested complex fields</li><li>Parallelization would be trival (map -> pmap)</li></ul></li></ul></section><section><h2>Use of Functions</h2><ul><li>Java<ul><li>Java relied on standard methods from collection interfaces</li><li>No first class functions were used in this example</li></ul></li><li>Clojure<ul><li>Clojure made heavy use of functions for manipulating data</li><li>map, into, zipmap, apply, max-key</li></ul></li></ul></section><section><h2>The Ranking Function</h2><ul><li>The Java ranker was tied to a TestDriver and is only good for Cars<ul><li>0 reuse</li><li>If color is the only applicable field, I could create IColor and IColorEvaluator interfaces</li><li>This still requires declaring the interface everywhere it is used</li></ul></li><li>The Clojure ranker only used relevant data<ul><li>This function can be used for any color-based ranking</li><li>By extension, any function using a data structure with the right fields can be reapplied</li><li>For example, I could use this function to pick out a refrigerator or a cat</li></ul></li></ul></section><section><h2>Was this unfair to Java?</h2><ul><li>Potential Java version improvements<ul><li>Make Car immutable with equals, hashcode, copy, and default constructors<ul><li>This is &quot;Effective Java&quot;</li><li>I now have to write even more code</li><li>A lot of code just moves around</li><li>I did it anyways: 126 LOC</li></ul></li></ul></li><li>In any event, this is canonical Java</li></ul></section><section><h2>The Immutable OOP/Java Solution</h2></section><section><p>IColorData.java</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">package cars2;
+
+public interface IColorData {
+    public String getColor();
+}</code></pre></section><section><p>ImmutableCar.java</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">package cars2;
+
+public class ImmutableCar implements IColorData {
+    private final String make;
+    private final int year;
+    private final String color;
+    private final double topSpeed;
+
+    public ImmutableCar(String make, int year, String color, double topSpeed) {
+        this.make = make;
+        this.year = year;
+        this.color = color;
+        this.topSpeed = topSpeed;
+    }
+
+    public String getMake() {
+        return make;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public double getTopSpeed() {
+        return topSpeed;
+    }
+
+    public ImmutableCar setMake(String newMake){
+        return new ImmutableCar(newMake, getYear(), getColor(), getTopSpeed());
+    }
+
+    public ImmutableCar setYear(int newYear){
+        return new ImmutableCar(getMake(), newYear, getColor(), getTopSpeed());
+    }
+
+    public ImmutableCar setColor(String newColor){
+        return new ImmutableCar(getMake(), getYear(), newColor, getTopSpeed());
+    }
+
+    public ImmutableCar setTopSpeed(double newTopSpeed){
+        return new ImmutableCar(getMake(), getYear(), getColor(), newTopSpeed);
+    }
+
+    @Override
+    public String toString() {
+        return getColor() + &quot; &quot; + getYear() + &quot; &quot; + getMake() + &quot; with top speed of &quot; + getTopSpeed() + &quot; mph&quot;;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ImmutableCar that = (ImmutableCar) o;
+
+        if (Double.compare(that.topSpeed, topSpeed) != 0) return false;
+        if (year != that.year) return false;
+        if (color != null ? !color.equals(that.color) : that.color != null) return false;
+        if (make != null ? !make.equals(that.make) : that.make != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        result = make != null ? make.hashCode() : 0;
+        result = 31 * result + year;
+        result = 31 * result + (color != null ? color.hashCode() : 0);
+        temp = Double.doubleToLongBits(topSpeed);
+        result = 31 * result + (int) (temp ^ (temp &gt;&gt;&gt; 32));
+        return result;
+    }
+}
+</code></pre></section><section><p>TestDriver2.java</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">package cars2;
+
+public class TestDriver2 {
+    //Super complicated ranking function.
+    public static double rank(IColorData car){
+        double score = 0.0;
+        switch (car.getColor()) {
+            case &quot;Red&quot;:
+                score = 2.0;
+                break;
+            case &quot;Green&quot;:
+                score = 1.0;
+                break;
+            case &quot;White&quot;:
+                score = 1.5;
+                break;
+            case &quot;Black&quot;:
+                score = 1.9;
+                break;
+            case &quot;Beige&quot;:
+                score = 0.0;
+                break;
+        }
+        return score;
+    }
+}
+</code></pre></section><section><p>ImprovedCarPurchasingModel.java</p><pre><code class="java" contenteditable="contenteditable" data-trim="data-trim">package cars2;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+public class ImprovedCarPurchasingModel {
+    public static void main(String[] args){
+        ImmutableCar defaultCar = new ImmutableCar(&quot;Honda&quot;, 2105, &quot;Beige&quot;, 120.0);
+
+        List&lt;String&gt; colors = new LinkedList&lt;&gt;();
+        colors.add(&quot;Red&quot;);
+        colors.add(&quot;Green&quot;);
+        colors.add(&quot;White&quot;);
+        colors.add(&quot;Black&quot;);
+        colors.add(&quot;Beige&quot;);
+
+        Map&lt;ImmutableCar, Double&gt; ranked = new HashMap&lt;ImmutableCar, Double&gt;();
+        for(String color : colors){
+            ImmutableCar car = defaultCar.setColor(color);
+            ranked.put(car, TestDriver2.rank(car));
+        }
+
+        ImmutableCar bestCar = null;
+        double bestScore = -1;
+        for(Map.Entry&lt;ImmutableCar, Double&gt; entry : ranked.entrySet()){
+            if(bestCar == null || entry.getValue() &gt; bestScore){
+                bestCar = entry.getKey();
+                bestScore = entry.getValue();
+            }
+        }
+
+        System.out.println(&quot;The best car is: &quot; + bestCar);
+    }
+}
+</code></pre></section><section><h2>Please never make me do this again</h2></section><section><h2>Car Shopping Summary</h2><ul><li>OOP and FP solutions were provided to the same problem</li><li>The FP implementation of the solution was:<ul><li>Much smaller</li><li>Concurrent</li><li>More flexible</li><li>More reusable</li></ul></li><li>These results are typical</li></ul></section></section><section><section><h2>Example: Conway's Game of Life</h2><p>Demonstrating FP in a stateful world</p></section><section><h2>Conway's Game of Life</h2><ul><li>Cellular automaton</li><li>Start with a grid in which some cells are &quot;dead&quot; and some are &quot;live&quot;</li><li>Step forward and re-evaluate each cell</li><li>Live cells with 2-3 living neighbors remains alive, otherwise it dies</li><li>Dead cells with 3 living neighbors becomes a live cell</li></ul></section><section><h2>Implementation</h2></section><section><p>rules</p><div style="position:relative;width:120%;left:-10%"><pre><code class="clojure" contenteditable="contenteditable" data-trim="data-trim">(ns conway.rules)
+
+(defn gen-cell[](if (&gt; (Math/random) 0.7) :alive :dead))
+
+(defn seed-grid [rows cols]
+  (vec (take rows (repeatedly (fn [] (vec (take cols (repeatedly gen-cell))))))))
+
+(defn neighbors [[i j]]
+  (let [x ((juxt inc inc identity dec dec dec identity inc) i)
+        y ((juxt identity inc inc inc identity dec dec dec) j)]
+    (map vector x y)))
+
+(defn count-neighbors [grid coord]
+  (let [n (map #(get-in grid %) (neighbors coord))]
+    (count (filter #(= % :alive) n))))
+
+(defn sim-step [grid coord]
+  (let [n-live (count-neighbors grid coord)]
+    (if (= :alive (get-in grid coord))
+      (case n-live
+        (2 3) :alive
+        :dead)
+      (if (= 3 n-live) :alive :dead))))
+
+(defn step [grid]
+  (into [] (for [i (range (count grid))]
+          (into [] (for [j (range (count (get grid i)))]
+                  (sim-step grid [i j]))))))</code></pre></div></section><section><p>ui</p><div style="position:relative;width:120%;left:-10%"><pre><code class="clojure" contenteditable="contenteditable" data-trim="data-trim">(ns conway.core
+  (:gen-class)
+  (:require [conway.rules])
+  (:import (javax.swing JFrame JPanel JButton JCheckBox Box BoxLayout)
+           (java.awt BorderLayout Graphics2D Color ImageCapabilities)
+           (java.awt.geom Rectangle2D$Double)
+           (java.awt.event ActionListener)
+           (java.awt.image VolatileImage)))
+
+(defn panel [grid-ref]
+  (let [pnl (proxy [JPanel] []
+    (paint [g]
+      (let [w (.getWidth this) 
+            h (.getHeight this)
+            bg (Rectangle2D$Double. 0 0 w (.getHeight this))
+            vimg (.createVolatileImage this w h (ImageCapabilities. true))
+            g2d (.createGraphics vimg)]
+        (doto g2d
+          (.setPaint Color/BLACK)
+          (.fill bg))
+        (doseq [i (range (count @grid-ref))]
+          (doseq [j (range (count (get @grid-ref i)))]
+            (let [c (if (= :alive (get-in @grid-ref [i j])) Color/GREEN Color/RED)
+                  sq (Rectangle2D$Double. (* i (/ w (count @grid-ref)))
+                                          (* j (/ h (count (get @grid-ref i))))
+                                          (/ w (count @grid-ref))
+                                          (/ h (count (get @grid-ref i))))]
+              (do
+                (.setPaint g2d c)
+                (.fill g2d sq)))))
+        (.drawImage g vimg 0 0 this)
+        )))]
+    (do 
+      (add-watch grid-ref :repaint (fn [_ _ _ _] (.repaint pnl)))
+    pnl)))
+
+(defn sim-button [grid-ref]
+  (let [cb (JCheckBox. &quot;Sim!&quot;)]
+    (future
+      (loop []
+        (do
+          (when (-&gt; cb .isSelected)
+            (dosync (ref-set grid-ref (conway.rules/step @grid-ref))))
+          (Thread/sleep 33))
+        (recur)))
+    cb))
+
+(defn step-button [grid-ref]
+  (doto (JButton. &quot;Step&quot;)
+    (.addActionListener
+      (reify ActionListener
+        (actionPerformed [_ _]
+          (dosync (ref-set grid-ref (conway.rules/step @grid-ref))))))))
+
+(defn reset-button [grid-ref]
+  (doto (JButton. &quot;Reset&quot;)
+    (.addActionListener
+      (reify ActionListener
+        (actionPerformed [_ _]
+          (dosync (ref-set grid-ref (conway.rules/seed-grid 100 100))))))))
+
+(defn run-app [exit-op] (let [grid-ref (ref (conway.rules/seed-grid 100 100))]
+  (doto (JFrame. &quot;Conway&apos;s Game of Life&quot;)
+    (.setSize 800 600)
+    (.setDefaultCloseOperation exit-op)
+    (.add (panel grid-ref) BorderLayout/CENTER)
+    (.add (doto (Box. BoxLayout/PAGE_AXIS)
+            (.add (step-button grid-ref))
+            (.add (sim-button grid-ref))
+            (.add (reset-button grid-ref))) BorderLayout/SOUTH)
+    (.setVisible true))))
+
+;(run-app JFrame/DISPOSE_ON_CLOSE)
+
+(defn -main
+  [&amp; args]
+  (future (run-app JFrame/EXIT_ON_CLOSE)))
+</code></pre></div></section><section><h2>Program Stats</h2><ul><li>2 Files, 105 LOC</li><li>Logic: 1 File, 28 LOC</li><li>Application: 1 File, 77 LOC</li></ul></section><section><h1>Observations</h1></section><section><h2>Program Design</h2><ul><li>All model logic was contained in a single file with pure FP code</li><li>The UI contained all stateful code</li><li>I was very lazy - The UI could definitely be cleaner and smaller</li><li>The actual domain model is managed by a single reference (a Clojure concurrency primitive)</li><li>The reference can be watched for updates and set using transactions</li><li>This is a typical design</li></ul></section><section><h2>Performance</h2><ul><li>Doing some simple tests shows a 1000 x 1000 grid takes ~100 ms to compute</li><li>Doing some simple tests shows a 100 x 100 grid takes < 1 ms to compute</li><li>GUI performance is the major bottleneck</li><li>Fixing GUI performance is left as an exercise for the presenter (or reader)</li></ul></section><section><h2>Conway's Game of Life Summary</h2><ul><li>You can have complex stateful applications written in FP</li><li>A common pattern:<ul><li>Implement rules/logic in a completely functional manner</li><li>Use a Clojure concurrency primitive (atom, ref, or agent) to manage state</li><li>The UI interacts with the concurrency primitive</li><li>The concurrency primitive can be watched</li><li>This separates concerns</li></ul></li></ul></section></section><section><h1>End of Examples</h1></section><section><h2>Conclusion</h2><small><ul><li>Functional Programming is built on the idea of applying functions to values</li><li>FP isn't just functions; You also need values and no side-effects</li><li>It is a different way of thinking, but you will write a lot less code and it will be synchronous</li><li>Synchronicity is critical in a multicore world</li><li>Java 8 has some elements of FP, but is very far away from being fully functional</li><li>Newer languages have much better FP support than Java 8<ul><li>Scala has functions and values, but no buit-in concurrency primitives (See Akka)</li><li>Clojure does it all</li></ul></li><li>If you are interested in FP, you might want to consider Scala or Clojure (Especially Clojure)</li></ul></small></section><section><h1>Questions?</h1></section></div></div><script src="bower_components/reveal.js/lib/js/head.min.js"></script><script src="bower_components/reveal.js/js/reveal.js"></script><script src="MathJax.Hub.Config({
+        tex2jax: {inlineMath: [[&amp;quot;$&amp;quot;,&amp;quot;$&amp;quot;],[&amp;quot;\(&amp;quot;,&amp;quot;\)&amp;quot;]]}
+      });" type="text/x-mathjax-config"></script><script src="bower_components/MathJax/MathJax.js?config=TeX-AMS_HTML-full" type="text/javascript"></script><script src="js/reveal-cl.js" type="text/javascript"></script></body></html></>
