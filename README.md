@@ -3,7 +3,7 @@
 Slides/content from my "Functional Programming from the Fire Hose" talk.
 
 # Slides
-You can play the slides [here](http://mbastia.github.io/fp-firehose/fp-firehose.html#/). Press 'F' to 
+You can play the slides [here](http://markbastian.github.io/fp-firehose/fp-firehose.html#/). Press 'F' to 
 go fullscreen and 'Esc' to go back to windowed mode.
 
 # Example Code
